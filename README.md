@@ -651,6 +651,7 @@ Sebelum menjawab soal - soal yang diberikan, pastikan file - file ini ada pada `
     apt-get update
     apt-get install lynx -y
     apt-get install apache2-utils -y
+    apt-get install jq -y
     clear
     ab -V
     echo "init complete"
@@ -1587,6 +1588,7 @@ mariadb --host=192.220.2.1 --port=3306 --user=kelompoke28 --password=passworde28
 
 Hasilnya adalah sebagai berikut:
 
+![](/images/test-database.png)
 
 ### No 14
 > Frieren, Flamme, dan Fern memiliki Riegel Channel sesuai dengan quest guide berikut. Jangan lupa melakukan instalasi PHP8.0 dan Composer
@@ -1750,6 +1752,8 @@ service php8.0-fpm restart
 ```
 #### Testing:  
 
+![](/images/lynx-frieren.png)
+
 ### No 15
 > Riegel Channel memiliki beberapa endpoint yang harus ditesting sebanyak 100 request dengan 10 request/second. Tambahkan response dan hasil testing pada grimoire. POST /auth/register
 
@@ -1768,6 +1772,12 @@ Lakukan perintah berikut:
 ab -n 100 -c 10 -p register.json -T application/json http://192.220.4.1:8001/api/auth/register
 ```
 
+Hanya ada 1 request saja yang diproses sedangkan 99 lainnys gagal.
+
+![](/images/benchmark-register.png)
+
+![](/images/htop-register.png)
+
 ### No 16
 > Riegel Channel memiliki beberapa endpoint yang harus ditesting sebanyak 100 request dengan 10 request/second. Tambahkan response dan hasil testing pada grimoire. POST /auth/login
 
@@ -1785,6 +1795,12 @@ Lakukan perintah berikut:
 ```
 ab -n 100 -c 10 -p login.json -T application/json http://192.220.4.1:8001/api/auth/login
 ``` 
+
+Terdapat 60 request yang diproses sedangkan 40 lainnya gagal.
+
+![](/images/htop-login.png)
+
+![](/images/benchmark-login.png)
 
 ### No 17
 > Riegel Channel memiliki beberapa endpoint yang harus ditesting sebanyak 100 request dengan 10 request/second. Tambahkan response dan hasil testing pada grimoire. GET /me
@@ -1809,10 +1825,17 @@ Lakukan perintah berikut:
 ab -n 100 -c 10 -H "Authorization: Bearer $token" http://192.220.4.1:8001/api/me
 ```
 
+Terdapat 60 request yang diproses sedangkan 40 lainnya gagal.
+
+![](/images/htop-me.png)
+
+![](/images/benchmark-me.png)
+
 ### No 18
 > Untuk memastikan ketiganya bekerja sama secara adil untuk mengatur Riegel Channel maka implementasikan Proxy Bind pada Eisen untuk mengaitkan IP dari Frieren, Flamme, dan Fern
 
 #### Answer:
+Di sini akan diimplementasikan Load Balancing dengan membagi beban secara merata kepada setiap workernya
 Lakukan konfigurasi pada `/etc/nginx/sites-available/laravel-block` di Load Balancer seperti berikut ini:
 
 ```
@@ -1845,11 +1868,38 @@ Lakukan testing pada client dengan perintah berikut:
 ab -n 100 -c 10 -p login.json -T application/json http://192.220.2.2:8080/api/auth/login
 ```
 
+Terdapat 80 request yang diproses sedangkan 20 lainnya gagal.
+
+![](/images/htop-lb.png)
+
+![](/images/benchmark-lb.png)
+
+Frieren
+
+![](/images/frieren-handle.png)
+
+Flamme
+
+![](/images/flamme-handle.png)
+
+Fern
+
+![](/images/fern-handle.png)
+
 ### No 19
 > Untuk meningkatkan performa dari Worker, coba implementasikan PHP-FPM pada Frieren, Flamme, dan Fern. Untuk testing kinerja naikkan pm.max_children, pm.start_servers, pm.min_spare_servers, pm.max_spare_servers
 sebanyak tiga percobaan dan lakukan testing sebanyak 100 request dengan 10 request/second kemudian berikan hasil analisisnya pada Grimoire
 
 #### Answer:
+
+pm.max_children: Menentukan jumlah maksimum pekerja PHP (proses anak) yang dapat berjalan secara bersamaan. Nilai ini sebaiknya disesuaikan dengan kapasitas sumber daya server. Jika terlalu rendah, server mungkin tidak dapat menangani banyak permintaan secara bersamaan, sementara jika terlalu tinggi, dapat menyebabkan kelebihan beban dan kekurangan sumber daya.
+
+pm.start_servers: Menentukan jumlah pekerja PHP yang akan dimulai secara otomatis ketika PHP-FPM pertama kali dijalankan atau direstart. Ini membantu dalam mengoptimalkan performa pada saat server pertama kali dimulai.
+
+pm.min_spare_servers: Menentukan jumlah minimum pekerja PHP yang tetap berjalan saat server berjalan. Ini membantu menjaga agar server tetap responsif terhadap permintaan bahkan saat lalu lintas rendah.
+
+pm.max_spare_servers: Menentukan jumlah maksimum pekerja PHP yang dapat berjalan tetapi tidak menangani permintaan. Jumlah ini disesuaikan dengan kebutuhan untuk menangani lonjakan lalu lintas tanpa menambahkan terlalu banyak sumber daya ketika beban rendah.
+
 Terdapat 4 konfigurasi proses package manager pada masing-masing worker:
 
 Konfigurasi 1:
@@ -1945,12 +1995,29 @@ service php8.0-fpm restart
 ```
 
 #### Testing:  
+Script 1
+
+![](/images/config-1.png)
+
+Script 2
+
+![](/images/config-2.png)
+
+Script 3
+
+![](/images/config-2.png)
+
+Script 4
+
+![](/images/config-4.png)
 
 
 ### No 20
 > Nampaknya hanya menggunakan PHP-FPM tidak cukup untuk meningkatkan performa dari worker maka implementasikan Least-Conn pada Eisen. Untuk testing kinerja dari worker tersebut dilakukan sebanyak 100 request dengan 10 request/second.
 
 #### Answer:  
+Karena ternyata hasil yang diberikan juga tidak cukup untuk meningkatkan performa worker. Oleh karena itu, ditambahkan algoritma Least-connection. Algoritma ini akan melakukan prioritas pembagian dari beban kinerja yang paling rendah. Node master akan mencatat semua beban dan kinerja dari semua node dan akan melakukan prioritas dari beban yang paling rendah. Sehingga diharapkan tidak ada server dengan beban yang rendah.
+
 Lakukan konfigurasi pada `/etc/nginx/sites-available/laravel-block` seperti di bawah ini:
 ```
 upstream laravelworker  {
@@ -1980,7 +2047,10 @@ Lakukan perintah:
 ```
 ab -n 100 -c 10 -p login.json -T application/json http://www.riegel.canyon.e28.com/api/auth/login
 ```
-  
+
+Semua request berhasil diproses
+
+![](/images/benchmark-leastconnection.png)  
 
 ### Grimoire
 [Google Docs](https://docs.google.com/document/d/1lvomvX1JvBtyktqLWGej73DYIFzhHMV7gt0fMgIox_U/edit)
