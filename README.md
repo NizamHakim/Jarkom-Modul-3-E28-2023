@@ -1768,11 +1768,12 @@ Untuk menyelesaikan soal ini perlu dilakukan Apache Benchmark pada salah satu wo
 
 #### Testing:  
 Lakukan perintah berikut:
+
 ```
 ab -n 100 -c 10 -p register.json -T application/json http://192.220.4.1:8001/api/auth/register
 ```
 
-Hanya ada 1 request saja yang diproses sedangkan 99 lainnys gagal.
+Hanya ada 1 request saja yang diproses sedangkan 99 lainnya gagal.
 
 ![](/images/benchmark-register.png)
 
@@ -1783,13 +1784,16 @@ Hanya ada 1 request saja yang diproses sedangkan 99 lainnys gagal.
 
 #### Answer:
 Untuk menyelesaikan soal ini perlu dilakukan Apache Benchmark pada salah satu worker, dimana kami di sini menggunakan Frieren. Selanjutnya, akan dilakukan testing pada client. Di sini menggunakan json yang akan dikirim pada endpoint api/auth/login:
+
 ```
 {
     "username": "username",
     "password": "password"
 }  
+```
 
-#### Testing: 
+#### Testing:
+
 ```
 Lakukan perintah berikut:
 ```
