@@ -923,9 +923,7 @@ Sebelum menjawab soal - soal yang diberikan, pastikan file - file ini ada pada `
   - config-1.sh
 
   ```
-  #!/bin/bash
-
-  echo `[www]
+  echo '[www]
   user = www-data
   group = www-data
   listen = /run/php/php8.0-fpm.sock
@@ -940,7 +938,7 @@ Sebelum menjawab soal - soal yang diberikan, pastikan file - file ini ada pada `
   pm.max_children = 5
   pm.start_servers = 2
   pm.min_spare_servers = 1
-  pm.max_spare_servers = 3` > /etc/php/8.0/fpm/pool.d/www.conf
+  pm.max_spare_servers = 3' > /etc/php/8.0/fpm/pool.d/www.conf
 
   service php8.0-fpm restart
   ```
@@ -948,9 +946,7 @@ Sebelum menjawab soal - soal yang diberikan, pastikan file - file ini ada pada `
   - config-2.sh
 
   ```
-  #!/bin/bash
-
-  echo `[www]
+  echo '[www]
   user = www-data
   group = www-data
   listen = /run/php/php8.0-fpm.sock
@@ -965,7 +961,7 @@ Sebelum menjawab soal - soal yang diberikan, pastikan file - file ini ada pada `
   pm.max_children = 25
   pm.start_servers = 5
   pm.min_spare_servers = 3
-  pm.max_spare_servers = 10` > /etc/php/8.0/fpm/pool.d/www.conf
+  pm.max_spare_servers = 10' > /etc/php/8.0/fpm/pool.d/www.conf
 
   service php8.0-fpm restart
   ```
@@ -973,9 +969,7 @@ Sebelum menjawab soal - soal yang diberikan, pastikan file - file ini ada pada `
   - config-3.sh
 
   ```
-  #!/bin/bash
-
-  echo `[www]
+  echo '[www]
   user = www-data
   group = www-data
   listen = /run/php/php8.0-fpm.sock
@@ -990,7 +984,7 @@ Sebelum menjawab soal - soal yang diberikan, pastikan file - file ini ada pada `
   pm.max_children = 50
   pm.start_servers = 8
   pm.min_spare_servers = 5
-  pm.max_spare_servers = 15` > /etc/php/8.0/fpm/pool.d/www.conf
+  pm.max_spare_servers = 15' > /etc/php/8.0/fpm/pool.d/www.conf
 
   service php8.0-fpm restart
   ```
@@ -998,9 +992,8 @@ Sebelum menjawab soal - soal yang diberikan, pastikan file - file ini ada pada `
   - config-4.sh
 
   ```
-  #!/bin/bash
-
-  echo `[www]
+  
+  echo '[www]
   user = www-data
   group = www-data
   listen = /run/php/php8.0-fpm.sock
@@ -1015,7 +1008,7 @@ Sebelum menjawab soal - soal yang diberikan, pastikan file - file ini ada pada `
   pm.max_children = 75
   pm.start_servers = 10
   pm.min_spare_servers = 5
-  pm.max_spare_servers = 20` > /etc/php/8.0/fpm/pool.d/www.conf
+  pm.max_spare_servers = 20' > /etc/php/8.0/fpm/pool.d/www.conf
 
   service php8.0-fpm restart
   ```
@@ -1850,7 +1843,7 @@ upstream laravelworker  {
 Lakukan testing pada client dengan perintah berikut:
 
 ```
-ab -n 100 -c 10 -p login.json -T application/json http://www.riegel.canyon.e28.com/api/auth/login
+ab -n 100 -c 10 -p login.json -T application/json http://192.220.2.2:8080/api/auth/login
 ```
 
 ### No 19
@@ -1863,7 +1856,7 @@ Terdapat 4 konfigurasi proses package manager pada masing-masing worker:
 Konfigurasi 1:
 
 ```
-echo `[www]
+echo '[www]
 user = www-data
 group = www-data
 listen = /run/php/php8.0-fpm.sock
@@ -1878,7 +1871,7 @@ pm = dynamic
 pm.max_children = 5
 pm.start_servers = 2
 pm.min_spare_servers = 1
-pm.max_spare_servers = 3` > /etc/php/8.0/fpm/pool.d/www.conf
+pm.max_spare_servers = 3' > /etc/php/8.0/fpm/pool.d/www.conf
 
 service php8.0-fpm restart
 ```  
@@ -1886,7 +1879,7 @@ service php8.0-fpm restart
 Konfigurasi 2
 
 ```
-echo `[www]
+echo '[www]
 user = www-data
 group = www-data
 listen = /run/php/php8.0-fpm.sock
@@ -1901,7 +1894,7 @@ pm = dynamic
 pm.max_children = 25
 pm.start_servers = 5
 pm.min_spare_servers = 3
-pm.max_spare_servers = 10` > /etc/php/8.0/fpm/pool.d/www.conf
+pm.max_spare_servers = 10' > /etc/php/8.0/fpm/pool.d/www.conf
 
 service php8.0-fpm restart
 ```
@@ -1909,7 +1902,7 @@ service php8.0-fpm restart
 Konfigurasi 3
 
 ```
-echo `[www]
+echo '[www]
 user = www-data
 group = www-data
 listen = /run/php/php8.0-fpm.sock
@@ -1924,7 +1917,7 @@ pm = dynamic
 pm.max_children = 50
 pm.start_servers = 8
 pm.min_spare_servers = 5
-pm.max_spare_servers = 15` > /etc/php/8.0/fpm/pool.d/www.conf
+pm.max_spare_servers = 15' > /etc/php/8.0/fpm/pool.d/www.conf
 
 service php8.0-fpm restart
 ```
@@ -1932,7 +1925,7 @@ service php8.0-fpm restart
 Konfigurasi 4
 
 ```
-echo `[www]
+echo '[www]
 user = www-data
 group = www-data
 listen = /run/php/php8.0-fpm.sock
@@ -1947,7 +1940,7 @@ pm = dynamic
 pm.max_children = 75
 pm.start_servers = 10
 pm.min_spare_servers = 5
-pm.max_spare_servers = 20` > /etc/php/8.0/fpm/pool.d/www.conf
+pm.max_spare_servers = 20' > /etc/php/8.0/fpm/pool.d/www.conf
 
 service php8.0-fpm restart
 ```
