@@ -919,7 +919,6 @@ Sebelum menjawab soal - soal yang diberikan, pastikan file - file ini ada pada `
     }
     ```
 
-    Buatlah direktori /root/pm-config dan masukkan file-file konfigurasi package manager berikut:
   - config-1.sh
 
   ```
