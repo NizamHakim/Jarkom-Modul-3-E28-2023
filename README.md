@@ -1794,8 +1794,8 @@ Untuk menyelesaikan soal ini perlu dilakukan Apache Benchmark pada salah satu wo
 
 #### Testing:
 
-```
 Lakukan perintah berikut:
+
 ```
 ab -n 100 -c 10 -p login.json -T application/json http://192.220.4.1:8001/api/auth/login
 ``` 
