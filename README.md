@@ -926,7 +926,7 @@ Sebelum menjawab soal - soal yang diberikan, pastikan file - file ini ada pada `
 #### Answer:  
 Konfigurasi domain riegel.canyon.e28.com diatur pada file `/root/riegel.canyon.e28.com` yang kemudian akan di copy menuju `/etc/bind/jarkom/riegel.canyon.e28.com` melalui `init.sh`  
 
-riegel.canyon.e28.com  
+**riegel.canyon.e28.com**  
 ```
 ;
 ; BIND data file for local loopback interface
@@ -946,7 +946,7 @@ www             IN      CNAME   riegel.canyon.e28.com.
 
 Sedangkan konfigurasi domain granz.channel.e28.com diatur pada file `/root/granz.channel.e28.com` yang kemudian akan di copy menuju `/etc/bind/jarkom/granz.channel.e28.com` melalui `init.sh`  
 
-granz.channel.e28.com  
+**granz.channel.e28.com**  
 ```
 ;
 ; BIND data file for local loopback interface
@@ -967,20 +967,20 @@ www             IN      CNAME   granz.channel.e28.com.
 #### Testing:  
 Test domain menggunakan ping melalui Sein_Client.  
 
-riegel.canyon.e28.com  
+**riegel.canyon.e28.com**  
 ![](/images/ping-riegel.canyon.e28.com.png)  
 
-granz.channel.e28.com  
+**granz.channel.e28.com**  
 ![](/images/ping-granz.channel.e28.com.png)  
 
 ### No 1
 > Lakukan konfigurasi sesuai dengan peta yang sudah diberikan. Semua CLIENT harus menggunakan konfigurasi dari DHCP Server.
 
 #### Answer:  
-Konfigurasi dilakukan sesuai dengan [Network Configuration](#network-configuration)  
+Konfigurasi dilakukan sesuai dengan [Network Configuration](#network-configuration).  
 Konfigurasi DHCP Server pada node Himmel diatur pada file `/root/dhcpd.conf` dan `/root/isc-dhcp-server` yang kemudian akan dicopy ke `/etc/dhcp/dhcpd.conf` dan `/etc/default/isc-dhcp-server` melalui `init.sh`  
 
-dhcpd.conf
+**dhcpd.conf**
 ```
 option domain-name "example.org";
 option domain-name-servers ns1.example.org, ns2.example.org;
@@ -1047,12 +1047,29 @@ subnet 192.220.4.0 netmask 255.255.255.0 {
 ```
 IP Dynamic untuk clients pada subnet 192.220.3.0 dan 192.220.4.0 dan IP Static untuk WebServer pada subnet 192.220.3.0 dan 192.220.4.0  
 
-isc-dhcp-server
+**isc-dhcp-server**
 ```
 INTERFACESv4="eth0"
 INTERFACESv6=""
 ```
 eth0 adalah link Himmel yang mengarah ke router. INTERFACESv6 tidak disetting karna tidak digunakan.  
+
+Kemudian karena Client dan DHCP Server berada pada subnet yang berbeda, jangan lupa lakukan konfigurasi DHCP Relay pada Aura_Router.  
+Konfigurasi DHCP Relay diatur pada file `/root/isc-dhcp-relay` dan `/root/sysctl.conf` yang kemudian akan dicopy ke `/etc/default/isc-dhcp-relay` dan `/etc/sysctl.conf` melalui `init.sh`  
+
+**isc-dhcp-relay**  
+```
+SERVERS="192.220.1.1"
+INTERFACES="eth1 eth3 eth4"
+OPTIONS=""
+```
+SERVERS adalah IP dari DHCP server. eth1 adalah link dari Aura_Router ke DHCP server sedangkan eth3 dan eth4 adalah link dari router menuju Client dan WebServer yang dikonfigurasi menggunakan DHCP.  
+
+**sysctl.conf**
+```
+net.ipv4.ip_forward=1
+```
+Digunakan agar Aura_Router bisa memforward DHCP request menuju DHCP server  
 
 #### Testing:  
 Test bisa dilakukan menggunakan command `ip a` pada Sein_Client  
@@ -1065,78 +1082,351 @@ Bisa dilihat bahwa IP Sein pada eth0 adalah 192.220.4.16
 > Client yang melalui Switch3 mendapatkan range IP dari [prefix IP].3.16 - [prefix IP].3.32 dan [prefix IP].3.64 - [prefix IP].3.80
 
 #### Answer:  
-
+Range IP diatur pada `/root/dhcpd.conf` pada subnet 192.220.3.0 bagian,
+```
+range 192.220.3.16 192.220.3.32;
+range 192.220.3.64 192.220.3.80;
+```
 #### Testing:  
+Test bisa dilakukan menggunakan command `ip a` pada Revolte_Client dan Richter_Client    
+
+**Revolte_Client**  
+
+![](/images/ipa-revolte.png)  
+
+**Richter_Client**  
+
+![](/images/ipa-richter.png)
+
+Bisa dilihat bahwa IP Revolte pada eth0 adalah 192.220.3.18 dan IP Richter pada eth0 adalah 192.220.3.19
 
 ### No 3
 > Client yang melalui Switch4 mendapatkan range IP dari [prefix IP].4.12 - [prefix IP].4.20 dan [prefix IP].4.160 - [prefix IP].4.168
 
 #### Answer:  
-
+Range IP diatur pada `/root/dhcpd.conf` pada subnet 192.220.4.0 bagian,
+```
+range 192.220.4.12 192.220.4.20;
+range 192.220.4.160 192.220.4.168;
+```
 #### Testing:  
+Test bisa dilakukan menggunakan command `ip a` pada Sein_Client dan Stark_Client    
+
+**Sein_Client**  
+
+![](/images/ipa-sein.png)  
+
+**Stark_Client**  
+
+![](/images/ipa-stark.png)  
+
+Bisa dilihat bahwa IP Sein pada eth0 adalah 192.220.4.16 dan IP Stark pada eth0 adalah 192.220.4.13
 
 ### No 4
 > Client mendapatkan DNS dari Heiter dan dapat terhubung dengan internet melalui DNS tersebut
 
 #### Answer:  
+DNS pada node yang dikonfigurasi menggunakan DHCP server diatur pada file `/root/dhcpd.conf` pada bagian,
+```
+option domain-name-servers 192.220.1.2;
+```
+IP yang dituliskan pada option domain-name-servers akan dimasukkan ke `/etc/resolv.conf` masing - masing node.  
+
+Sedangkan agar dapat terhubung dengan internet maka perlu ditambahkan forwarder menuju 192.168.122.1 pada DNS Server Heiter yang diatur pada file `/root/named.conf.options`
+```
+options {
+        directory "/var/cache/bind";
+
+        forwarders {
+                192.168.122.1;
+        };
+
+        allow-query{any;};
+        listen-on-v6 { any; };
+};
+```
 
 #### Testing:  
+Test dilakukan dengan melakukan ping google.com pada Sein_Client, jika sudah terhubung dengan DNS dengan forwarder seharusnya bisa melakukan ping ke internet  
+
+![](/images/ping-google.png)
 
 ### No 5
 > Lama waktu DHCP server meminjamkan alamat IP kepada Client yang melalui Switch3 selama 3 menit sedangkan pada client yang melalui Switch4 selama 12 menit. Dengan waktu maksimal dialokasikan untuk peminjaman alamat IP selama 96 menit
 
 #### Answer:  
+Lama peminjaman IP diatur pada file `/root/dhcpd.conf` pada bagian,
+
+Untuk client yang melalui Switch3 (Subnet 192.220.3.0) 
+```
+default-lease-time 180;
+max-lease-time 5760;
+```
+
+Untuk client yang melalui Switch4 (Subnet 192.220.4.0)
+```
+default-lease-time 720;
+max-lease-time 5760;
+```
 
 #### Testing:  
+(none)
 
 ### No 6
-> Pada masing-masing worker PHP, lakukan konfigurasi virtual host untuk website berikut dengan menggunakan php 7.3
+> Pada masing-masing worker PHP, lakukan konfigurasi virtual host untuk website [berikut](https://drive.google.com/file/d/1ViSkRq7SmwZgdK64eRbr5Fm1EGCTPrU1/view?usp=sharing) dengan menggunakan php 7.3
 
 #### Answer:  
+Download dan unzip file yang dibutuhkan dengan menjalankan `/root/download.sh` kemudian copy semua file didalamnya ke directory `/var/www/html` melalui `init.sh`    
+```sh
+wget -O x.zip "https://drive.google.com/u/0/uc?id=1ViSkRq7SmwZgdK64eRbr5Fm1EGCTPrU1&export=download"
+unzip x.zip
+rm x.zip
+```
+
+Konfigurasi server block dari worker php diatur pada file `/root/default` yang kemudian dicopy ke `/etc/nginx/sites-available/default` melaui `init.sh`  
+```
+server {
+        listen 80 default_server;
+        listen [::]:80 default_server;
+
+        root /var/www/html;
+        index index.php index.html index.htm index.nginx-debian.html;
+        server_name granz.channel.e28.com;
+
+        location / {
+                try_files $uri $uri/ =404;
+        }
+
+        location ~ \.php$ {
+                include snippets/fastcgi-php.conf;
+
+                fastcgi_pass unix:/run/php/php7.3-fpm.sock;
+        }
+
+        location ~ /\.ht {
+                deny all;
+        }
+}
+```
+Karena metode ini melakukan overwrite pada default block nginx maka tidak perlu membuat symbolic link  
 
 #### Testing:  
+Test dengan melakukan lynx granz.channel.e28.com pada Sein_Client  
+
+![](/images/lynx-granz.channel.e28.com.png)  
+
+Terhubung ke worker Lawine karena domain granz.channel.e28.com mengarah ke 192.220.3.1  
 
 ### No 7
 > Kepala suku dari Bredt Region memberikan resource server sebagai berikut: Lawine, 4GB, 2vCPU, dan 80 GB SSD. Linie, 2GB, 2vCPU, dan 50 GB SSD. Lugner 1GB, 1vCPU, dan 25 GB SSD. aturlah agar Eisen dapat bekerja dengan maksimal, lalu lakukan testing dengan 1000 request dan 100 request/second
 
 #### Answer:  
+Konfigurasi block Load Balancer pada node Eise diatur pada file `/root/lb/roundrobin-php` yang kemudian akan dicopy ke `/etc/nginx/sites-available/php-block` melalui `init.sh`  
+```
+#Default menggunakan Round Robin
+upstream phpworker  {
+        server 192.220.3.1; #IP Lawine
+        server 192.220.3.2; #IP Linie
+        server 192.220.3.3; #IP Lugner
+}
 
+server {
+        listen 8000;
+        server_name _;
+
+        allow 192.220.3.69;
+        allow 192.220.3.70;
+        allow 192.220.4.167;
+        allow 192.220.4.168;
+        deny all;
+
+        location /its {
+                proxy_pass https://www.its.ac.id/;
+                proxy_set_header    X-Real-IP $remote_addr;
+                proxy_set_header    X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header    Host $http_host;
+        }
+
+        location / {
+                proxy_pass http://phpworker;
+                proxy_set_header    X-Real-IP $remote_addr;
+                proxy_set_header    X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header    Host $http_host;
+
+                auth_basic "Private Property";
+                auth_basic_user_file /etc/nginx/rahasisakita/.htpasswd;
+        }
+
+        location ~ /\.ht {
+                deny all;
+        }
+
+        error_log /var/log/nginx/lb_error.log;
+        access_log /var/log/nginx/lb_access.log;
+}
+```
 #### Testing:  
+Jalankan command lynx 192.220.2.2:8000 melalui Sein_Client. Tetapi sebelum melakukan lynx, jalankan dulu file `/root/phptest/switch-ip.sh` untuk mengganti IP dari DHCP Dynamic ke 192.220.4.167, kemudian restart node.  
+
+![](/images/switched-sein.png)  
+
+Jalankan lynx sebanyak 3 kali  
+
+![](/images/lb-lawine.png)  
+
+![](/images/lb-linie.png)  
+
+![](/images/lb-lugner.png)  
+
+Testing 1000 request dan 100 request/second dengan menjalankan `/root/phptest/1000-100.loadtest.sh`
+```sh
+ab -A netics:ajke28 -n 1000 -c 100 -g out.data http://192.220.2.2:8000/
+```
+
+![](/images/result-1000-100.png)  
+
+![](/images/htop-1000-100.png)  
 
 ### No 8
 > Karena diminta untuk menuliskan grimoire, buatlah analisis hasil testing dengan 200 request dan 10 request/second masing-masing algoritma Load Balancer dengan ketentuan sebagai berikut: Nama Algoritma Load Balancer, Report hasil testing pada Apache Benchmark, Grafik request per second untuk masing masing algoritma., Analisis
 
 #### Answer:  
+Konfigurasi server block untuk masing - masing algoritma load balancing ada pada `/root/lb`. Untuk menggunakan algoritma tersebut jalankan file - file pada `/root` sebagai berikut.  
+
+- use_rr.sh
+- use_weightrr.sh
+- use_leastconn.sh
+- use_iphash.sh
+- use_generichash.sh  
+
+File - file ini akan mengoverwrite `/etc/nginx/sites-available/php-block` dengan algoritmanya masing - masing.  
 
 #### Testing:  
+- Round Robin
+  Jalankan `use_rr.sh` pada Eisen_LB kemudian jalankan `/root/phptest/200-10.loadtest.sh` pada Sein_Client  
+
+  ![](/images/res-roundrobin.png)  
+
+  ![](/images/roundrobin.png)  
+
+- Weighted Round Robin
+  Jalankan `use_weightrr.sh` pada Eisen_LB kemudian jalankan `/root/phptest/200-10.loadtest.sh` pada Sein_Client  
+
+  ![](/images/res-weightedroundrobin.png)  
+
+  ![](/images/weightedroundrobin.png)  
+
+- Least Connection
+  Jalankan `use_leastconn.sh` pada Eisen_LB kemudian jalankan `/root/phptest/200-10.loadtest.sh` pada Sein_Client  
+
+  ![](/images/res-leastconnection.png)  
+
+  ![](/images/leastconnection.png)  
+  
+- IP Hash
+  Jalankan `use_iphash.sh` pada Eisen_LB kemudian jalankan `/root/phptest/200-10.loadtest.sh` pada Sein_Client  
+
+  ![](/images/res-leastconnection.png)  
+
+  ![](/images/leastconnection.png)  
+  
+- Generic Hash
+  Jalankan `use_generichash.sh` pada Eisen_LB kemudian jalankan `/root/phptest/200-10.loadtest.sh` pada Sein_Client  
+
+  ![](/images/res-generichash.png)  
+
+  ![](/images/generichash.png)  
+  
+- Grafik
+
+  ![](/images/grafik-request-per-second.png)  
 
 ### No 9
 > Dengan menggunakan algoritma Round Robin, lakukan testing dengan menggunakan 3 worker, 2 worker, dan 1 worker sebanyak 100 request dengan 10 request/second, kemudian tambahkan grafiknya pada grimoire
 
 #### Answer:  
+Ganti algoritma load balancing dengan menjalankan `/root/use_rr.sh` pada Eisen_LB. Kemudian lakukan test untuk 3 worker, 2 worker, dan 1 worker. Pengurangan worker dapat dilakukan dengan mengcomment worker yang ingin dimatikan pada `/root/lb/roundrobin-php`, jangan lupa untuk menjalankan `/root/use_rr.sh` setiap pengurangan jumlah worker.  
 
-#### Testing:  
+#### Testing:
+Test dilakukan dengan menjalankan `/root/phptest/100-10.loadtest.sh` pada Sein_Client    
+- 3 Worker  
 
+  ![](/images/res-3worker.png)  
+
+  ![](/images/3worker.png)  
+
+- 2 Worker  
+
+  ![](/images/res-2worker.png)  
+
+  ![](/images/2worker.png)  
+  
+- 1 Worker  
+
+  ![](/images/res-1worker.png)  
+
+  ![](/images/1worker.png)  
+  
 ### No 10
 > Selanjutnya coba tambahkan konfigurasi autentikasi di LB dengan dengan kombinasi username: “netics” dan password: “ajkyyy”, dengan yyy merupakan kode kelompok. Terakhir simpan file “htpasswd” nya di /etc/nginx/rahasisakita/
 
 #### Answer:  
+Penambahan user bisa dilakukan dengan menjalankan `/root/create-user.sh` pada Eisen_LB  
+```
+mkdir /etc/nginx/rahasisakita
+htpasswd -c /etc/nginx/rahasisakita/.htpasswd netics
+```
+Masukkan password `ajke28` untuk use netics  
 
 #### Testing:  
+Jalankan lynx 192.220.2.2:8000 pada Sein_Client, seharusnya akan diminta untuk memasukkan user dan password untuk autentikasi  
+
+![](/images/permission-denied.png)  
+
+![](/images/auth.png)  
 
 ### No 11
 > Lalu buat untuk setiap request yang mengandung /its akan di proxy passing menuju halaman https://www.its.ac.id
 
 #### Answer:  
+Proxy passing diatur pada file `/root/lb/roundrobin-php` pada Eisen_LB, yaitu pada bagian berikut,  
+```
+location /its {
+        proxy_pass https://www.its.ac.id/;
+        proxy_set_header    X-Real-IP $remote_addr;
+        proxy_set_header    X-Forwarded-For $proxy_add_x_forwarded_for;                
+        proxy_set_header    Host $http_host;
+}
+```
 
 #### Testing:  
+Jalankan lynx 192.220.2.2:8000/its pada Sein_Client, seharusnya akan diarahkan menuju https://www.its.ac.id  
+
+![](/images/its.png)  
 
 ### No 12
 > Selanjutnya LB ini hanya boleh diakses oleh client dengan IP [Prefix IP].3.69, [Prefix IP].3.70, [Prefix IP].4.167, dan [Prefix IP].4.168
 
 #### Answer:  
+Permission untuk akses load balancer diatur pada file `/root/lb/roundrobin-php` yaitu pada bagian,
+```
+allow 192.220.3.69;
+allow 192.220.3.70;
+allow 192.220.4.167;
+allow 192.220.4.168;
+deny all;
+```
 
 #### Testing:  
+Sebelumnya kita menggunakan `/root/phptest/switch-ip.sh` pada Sein_Client untuk mengganti IP menjadi 192.220.4.167, sekarang kembalikan IP menjadi menggunakan DHCP dengan menjalankan `/root/phptest/revert-ip.sh`, kemudian restart node. Gunakan `ip a` untuk mengecek IP setelah direstart.  
+
+IP sekarang adalah 192.220.4.14
+
+![](/images/sein-revert.png)  
+
+Jalankan lynx 192.220.2.2:8000, seharusnya akan error karena IP tidak sesuai  
+
+![](/images/forbidden.png)  
 
 ### No 13
 > Semua data yang diperlukan, diatur pada Denken dan harus dapat diakses oleh Frieren, Flamme, dan Fern
